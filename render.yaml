@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: quotex-live-signal-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: MARKET_DATA_PROVIDER
+        value: "quotexapi"
+      - key: QUOTEX_SSID
+        sync: false
+      - key: TWELVE_DATA_API_KEY
+        sync: false
+      - key: QUANTEX_API_KEY
+        sync: false
+      - key: OTCHARTS_API_KEY
+        sync: false
+      - key: QUANTEX_BROKER
+        value: "quotex"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: TELEGRAM_SIGNAL_ALERTS_ENABLED
+        value: "true"
+      - key: TELEGRAM_SIGNAL_MIN_STRENGTH
+        value: "MODERATE"
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: REFRESH_INTERVAL_SECONDS
+        value: "300"
+      - key: FOREX_SYMBOLS
+        value: "EURUSD_otc,GBPUSD_otc,USDJPY_otc,EURUSD,GBPUSD,USDJPY"
+      - key: FOREX_TIMEFRAME_SECONDS
+        value: "60"
+      - key: DATABASE_PATH
+        value: "/tmp/forex_signal_history.db"
+      - key: QUOTEX_ACCOUNT
+        value: "demo"

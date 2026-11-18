@@ -56,6 +56,12 @@ class SsidUpdate(BaseModel):
     ssid: str
 
 
+class BridgeCandleBatch(BaseModel):
+    symbol: str
+    timeframe_seconds: int = 60
+    candles: list[dict]
+
+
 @app.post("/api/admin/ssid")
 def admin_update_ssid(payload: SsidUpdate, x_admin_token: str | None = Header(None, alias="X-Admin-Token")):
     """Apply a fresh Quotex SSID at runtime; no Render redeploy needed.
@@ -76,6 +82,27 @@ def admin_update_ssid(payload: SsidUpdate, x_admin_token: str | None = Header(No
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
 
+
+
+@app.post("/api/bridge/candles")
+def receive_browser_candles(
+    payload: BridgeCandleBatch,
+    x_market_bridge_token: str | None = Header(None, alias="X-Market-Bridge-Token"),
+):
+    """Receive validated OHLC only from the user's local read-only browser bridge."""
+    from market_bridge import BridgeError, ingest
+    try:
+        return ingest(payload.model_dump(), x_market_bridge_token)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from None
+    except BridgeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+
+
+@app.get("/api/bridge/status")
+def browser_bridge_status():
+    from market_bridge import status as bridge_status
+    return bridge_status()
 
 
 @app.get("/market", response_class=HTMLResponse)

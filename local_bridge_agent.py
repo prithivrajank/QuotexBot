@@ -19,7 +19,6 @@ MARKET_BRIDGE_TOKEN = os.getenv("MARKET_BRIDGE_TOKEN", "").strip()
 CANDLE_FILE = os.getenv("BROWSER_CANDLE_FILE", "").strip()
 TIMEFRAME_SECONDS = int(os.getenv("BROWSER_TIMEFRAME_SECONDS", "60"))
 POLL_SECONDS = max(2, int(os.getenv("BRIDGE_POLL_SECONDS", "5")))
-SENT: set[tuple[str, int, int]] = set()
 
 
 def find_files() -> list[Path]:
@@ -113,16 +112,12 @@ def main() -> None:
                 if not normalized:
                     continue
                 symbol, candle = normalized
-                key = ("*", symbol, candle["time"])
-                if key in SENT:
-                    continue
                 grouped.setdefault(symbol, {})[candle["time"]] = candle
         for symbol, by_time in grouped.items():
             rows = [by_time[t] for t in sorted(by_time)][-200:]
-            if send_batch(symbol, rows):
-                for row in rows:
-                    # Deduplicate by symbol/time across capture files.
-                    SENT.add(("*", symbol, row["time"]))
+            # Re-send the latest validated window as a lightweight heartbeat.
+            # The server upserts by candle timestamp, so this does not duplicate candles.
+            send_batch(symbol, rows)
         time.sleep(POLL_SECONDS)
 
 

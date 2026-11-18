@@ -22,7 +22,7 @@ DEFAULT_QUANTEX_SYMBOLS = ["EURUSD_otc", "GBPUSD_otc", "USDJPY_otc", "EURUSD", "
 
 
 def _normalize_symbol(value: str) -> str:
-    if os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower() in ("quantex", "otcharts", "quotexapi"):
+    if os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower() in ("quantex", "otcharts", "quotexapi", "browser_bridge"):
         value = value.strip()
         normalized = value.replace("/", "").replace("-", "").upper()
         return normalized[:-4] + "_otc" if normalized.endswith("_OTC") else normalized
@@ -53,7 +53,7 @@ def configured_symbols() -> list[str]:
     raw = os.getenv("FOREX_SYMBOLS", "").strip()
     if not raw:
         legacy = os.getenv("FOREX_SYMBOL", "").strip()
-        defaults = DEFAULT_QUANTEX_SYMBOLS if os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower() in ("quantex", "otcharts", "quotexapi") else DEFAULT_SYMBOLS
+        defaults = DEFAULT_QUANTEX_SYMBOLS if os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower() in ("quantex", "otcharts", "quotexapi", "browser_bridge") else DEFAULT_SYMBOLS
         raw = legacy or ",".join(defaults)
     symbols: list[str] = []
     seen: set[str] = set()
@@ -89,7 +89,7 @@ def get_snapshot(symbol: str | None = None) -> dict[str, Any]:
     return {
         "available": False,
         "source": data_source_label(),
-        "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi") else "standard forex, not Quotex OTC",
+        "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi", "browser_bridge") else "standard forex, not Quotex OTC",
         "message": "Waiting for the first scheduled refresh.",
         "watchlist": configured_symbols(),
     }
@@ -106,7 +106,7 @@ def get_watchlist() -> dict[str, Any]:
     symbols = configured_symbols()
     return {
         "source": data_source_label(),
-        "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi") else "standard forex, not Quotex OTC",
+        "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi", "browser_bridge") else "standard forex, not Quotex OTC",
         "symbols": symbols,
         "scanned": snapshots,
         "refresh_interval_seconds": refresh_interval_seconds(),
@@ -182,7 +182,7 @@ def refresh_snapshot(symbol: str | None = None) -> dict[str, Any]:
         error_snapshot = {
             "available": False,
             "source": data_source_label(),
-            "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi") else "standard forex, not Quotex OTC",
+            "market_type": "Quotex market" if os.getenv("MARKET_DATA_PROVIDER", "").strip().lower() in ("quantex", "otcharts", "quotexapi", "browser_bridge") else "standard forex, not Quotex OTC",
             "symbol": selected,
             "watchlist": symbols,
             "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -202,7 +202,7 @@ async def scheduled_refresh_loop() -> None:
         with _lock:
             enabled = _bot_enabled
         provider = os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower()
-        if enabled and provider != "otcharts":
+        if enabled and provider not in ("otcharts", "browser_bridge"):
             await asyncio.to_thread(refresh_snapshot)
             await asyncio.sleep(refresh_interval_seconds())
         else:

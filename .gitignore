@@ -14,3 +14,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# Local browser session and captured market data (never commit)
+quotex_browser_profile/
+browser_candles*.jsonl
+browser_ticks*.jsonl
+browser_history*.jsonl

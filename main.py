@@ -295,6 +295,38 @@ def history(limit: int = Query(50, ge=1, le=200)):
     }
 
 
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page():
+    """Simple browser form to apply a fresh Quotex SSID without a redeploy."""
+    return """<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Admin - SSID update</title><style>
+*{box-sizing:border-box}body{font:16px system-ui,-apple-system,sans-serif;background:#10131a;color:#f3f4f6;margin:28px auto;padding:0 16px;max-width:620px}section{background:#1c2230;padding:20px;border-radius:14px;margin:14px 0}label{display:block;margin:14px 0 6px;color:#aab4c5}input{width:100%;padding:12px;border-radius:8px;border:1px solid #46516a;background:#121722;color:#f3f4f6;font-size:15px}button{margin-top:16px;width:100%;padding:12px;border-radius:8px;border:0;background:#7c9cff;color:#10131a;font-weight:700;cursor:pointer;font-size:15px}button:disabled{opacity:.55}#result{margin-top:14px;padding:12px;border-radius:8px;display:none}#result.ok{display:block;background:#17351f;color:#8de3a4}#result.err{display:block;background:#3a1a1a;color:#ff9c9c}small,.muted{color:#aab4c5}
+</style></head><body><h1>Update Quotex SSID</h1><p class='muted'>Applies a fresh SSID at runtime, no Render redeploy needed. Needs the ADMIN_TOKEN you set in Render Environment.</p>
+<section>
+<label for='token'>Admin token</label><input id='token' type='password' placeholder='ADMIN_TOKEN from Render Environment' autocomplete='off'>
+<label for='ssid'>Fresh SSID</label><input id='ssid' type='text' placeholder='Paste the ssid value from your browser' autocomplete='off'>
+<button id='submit'>Update SSID</button>
+<div id='result'></div>
+<p class='muted' style='margin-top:16px'>The token is remembered only in this browser (not sent anywhere except this server) so you do not have to retype it every time.</p>
+</section>
+<script>
+const tokenEl=document.getElementById('token'),ssidEl=document.getElementById('ssid'),btn=document.getElementById('submit'),result=document.getElementById('result');
+const saved=localStorage.getItem('qb_admin_token');if(saved)tokenEl.value=saved;
+btn.addEventListener('click',async()=>{
+  const token=tokenEl.value.trim(),ssid=ssidEl.value.trim();
+  result.className='';result.style.display='none';
+  if(!token||!ssid){result.textContent='Enter both the admin token and the SSID.';result.className='err';return;}
+  btn.disabled=true;btn.textContent='Updating...';
+  try{
+    const r=await fetch('/api/admin/ssid',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':token},body:JSON.stringify({ssid})});
+    const d=await r.json();
+    if(r.ok){localStorage.setItem('qb_admin_token',token);result.textContent='Success: '+(d.message||'SSID updated.');result.className='ok';ssidEl.value='';}
+    else{result.textContent='Failed: '+(d.detail||'Unknown error');result.className='err';}
+  }catch(e){result.textContent='Request failed: '+e.message;result.className='err';}
+  finally{btn.disabled=false;btn.textContent='Update SSID';}
+});
+</script></body></html>"""
+
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
     return """<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Quotex Demo Live Data & Signal Bot</title><script src='https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js'></script><style>

@@ -113,7 +113,7 @@ def main() -> None:
                 if not normalized:
                     continue
                 symbol, candle = normalized
-                key = (str(path.resolve()), symbol, candle["time"])
+                key = ("*", symbol, candle["time"])
                 if key in SENT:
                     continue
                 grouped.setdefault(symbol, {})[candle["time"]] = candle

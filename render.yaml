@@ -10,8 +10,8 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.11
       - key: MARKET_DATA_PROVIDER
-        value: "quotexapi"
-      - key: QUOTEX_SSID
+        value: "browser_bridge"
+      - key: MARKET_BRIDGE_TOKEN
         sync: false
       - key: TWELVE_DATA_API_KEY
         sync: false

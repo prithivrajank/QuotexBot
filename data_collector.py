@@ -24,7 +24,7 @@ def _provider() -> str:
     return os.getenv("MARKET_DATA_PROVIDER", "twelve_data").strip().lower()
 
 def data_source_label() -> str:
-    return ("ChipaDevTeam QuotexAPI WebSocket (unofficial)" if _provider() == "quotexapi" else "OTCharts third-party Quotex market-data API (not operated by Quotex)" if _provider() == "otcharts" else "QUANTEX third-party Quotex market-data API (not operated by Quotex)" if _provider() == "quantex" else SOURCE)
+    return ("Local read-only Quotex Demo browser bridge" if _provider() == "browser_bridge" else "ChipaDevTeam QuotexAPI WebSocket (unofficial)" if _provider() == "quotexapi" else "OTCharts third-party Quotex market-data API (not operated by Quotex)" if _provider() == "otcharts" else "QUANTEX third-party Quotex market-data API (not operated by Quotex)" if _provider() == "quantex" else SOURCE)
 
 def _qx_request(path: str, params: dict[str, Any]) -> dict[str, Any]:
     key = os.getenv("QUANTEX_API_KEY", "").strip()

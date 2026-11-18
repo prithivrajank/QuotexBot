@@ -113,3 +113,12 @@ The `quotexapi` adapter now also registers the community library's quote callbac
 The WebSocket integration is based on the upstream library's documented `on_quote` / `subscribe_quotes` and `on_candle` / `subscribe_candles` interfaces. It is unofficial and has not been validated against every Quotex account or symbol. If a symbol produces no ticks, check the Render logs and confirm that the symbol identifier is supported. Never share the SSID.
 
 For Render Free, a connected browser must keep sending heartbeat messages: free services spin down after 15 minutes without inbound HTTP requests or WebSocket messages. A free instance can still restart or disconnect, so this is best-effort hobby streaming, not guaranteed 24/7 uptime. See https://render.com/docs/free and https://render.com/docs/websocket.
+
+
+## Local read-only browser bridge (Render transport)
+
+The Render service can be configured with `MARKET_DATA_PROVIDER=browser_bridge` so it does not attempt a direct Quotex login or require a Quotex SSID. Set `MARKET_BRIDGE_TOKEN` to the same long random secret in Render and in your local environment. Keep the token private and do not commit `.env` files.
+
+The local forwarder in `local_bridge_agent.py` reads only already-parsed candle JSONL files named `browser_candles_*.jsonl` (or the path in `BROWSER_CANDLE_FILE`) and posts validated OHLC records to `POST /api/bridge/candles` over HTTPS. It never reads browser cookies, SSID values, or raw WebSocket frames, and never sends trade commands. Install `requests`, set `RENDER_BASE_URL`, `MARKET_BRIDGE_TOKEN`, and `BROWSER_TIMEFRAME_SECONDS`, then run `python local_bridge_agent.py` from the folder containing the candle JSONL file.
+
+Check `GET /api/bridge/status` to see whether recent candle data has arrived. `connected` and `live_data` remain false until fresh validated candles are actually received. The forwarder cannot create candles: a compatible local read-only capture/parser must first produce explicit OHLC JSONL rows with `time`, `open`, `high`, `low`, `close`, and `symbol`. If the capture currently reports zero parsed candles, the bridge will correctly remain disconnected until that parser issue is resolved.

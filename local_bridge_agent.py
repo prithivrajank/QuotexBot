@@ -24,8 +24,9 @@ POLL_SECONDS = max(2, int(os.getenv("BRIDGE_POLL_SECONDS", "5")))
 def find_files() -> list[Path]:
     if CANDLE_FILE:
         return [Path(CANDLE_FILE)]
-    # Existing capture output convention. Only parsed candle JSONL is read.
-    return [Path(name) for name in sorted(glob.glob("browser_candles_*.jsonl"))]
+    # Support both the current collector filename and timestamped capture files.
+    names = sorted(set(glob.glob("browser_candles.jsonl") + glob.glob("browser_candles_*.jsonl")))
+    return [Path(name) for name in names]
 
 
 def read_rows(path: Path) -> list[dict[str, Any]]:

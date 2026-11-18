@@ -217,6 +217,9 @@ def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def connection_status() -> dict[str, Any]:
     """Validate the selected market-data provider."""
+    if _provider() == "browser_bridge":
+        from market_bridge import status as bridge_status
+        return bridge_status()
     if _provider() == "quotexapi":
         from quotexapi_provider import connection_status
         return connection_status()
@@ -325,6 +328,12 @@ def get_candles(
     asset: str, timeframe_seconds: int, limit: int = 100
 ) -> list[dict[str, Any]]:
     """Fetch real standard-forex OHLC bars, oldest first; never fabricate candles."""
+    if _provider() == "browser_bridge":
+        from market_bridge import get_candles as bridge_candles
+        rows = bridge_candles(asset.strip(), timeframe_seconds, limit)
+        if not rows:
+            raise MarketDataError("No browser-bridge candles are cached yet. Start the local bridge agent and keep the Demo chart open.")
+        return rows
     if not isinstance(asset, str) or not asset.strip():
         raise ValueError("asset must not be empty")
     if _provider() == "quotexapi":

@@ -101,17 +101,21 @@ def status() -> dict[str, Any]:
         received = dict(_last_received)
         counts = {f"{symbol}:{tf}": len(rows) for (symbol, tf), rows in _candles.items()}
     now = int(time.time())
-    fresh = any(now - timestamp <= 90 for timestamp in received.values())
+    fresh = any(now - timestamp <= 30 for timestamp in received.values())
+    candle_fresh = any(
+        rows and now - int(rows[-1]["time"]) <= 120
+        for rows in _candles.values()
+    )
     return {
         "connected": fresh,
-        "live_data": fresh and bool(counts),
+        "live_data": fresh and candle_fresh and bool(counts),
         "credentials_configured": bool(os.getenv("MARKET_BRIDGE_TOKEN", "").strip()),
         "source": "Local read-only Quotex Demo browser bridge",
         "market_type": "Quotex Demo (browser-observed)",
         "bridge_last_received": received,
         "candle_counts": counts,
         "message": (
-            "Authenticated local browser bridge is receiving validated candles."
+            "Authenticated local browser bridge is receiving recent validated candles."
             if fresh else
             "Waiting for a local read-only browser bridge. Render does not connect to Quotex directly."
         ),

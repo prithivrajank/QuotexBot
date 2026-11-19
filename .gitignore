@@ -20,3 +20,6 @@ quotex_browser_profile/
 browser_candles*.jsonl
 browser_ticks*.jsonl
 browser_history*.jsonl
+
+# Local visual capture settings
+visual_engine/region_config.json
